@@ -13,7 +13,7 @@ The package is pure metadata + a reflection walker. No Symfony bundle, no DI wir
 ## Requirements
 
 - PHP 8.4+
-- Symfony Console 8.1+ (for method-based `#[AsCommand]` and parameter-attribute prompts)
+- Symfony Console 8.0+ (constraint will move to 8.1 when `#[Ask]` / `#[AskChoice]` parameter-attribute introspection lands)
 
 ## Library usage
 

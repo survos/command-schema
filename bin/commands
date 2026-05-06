@@ -50,7 +50,14 @@ $kernel = new $kernelClass($env, $debug);
 $kernel->boot();
 
 $application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
-$schemas = (new \Survos\CommandSchema\Introspector\CommandIntrospector())->describeAll($application);
+
+$failures = [];
+$schemas = (new \Survos\CommandSchema\Introspector\CommandIntrospector())->describeAll(
+    $application,
+    static function (string $name, \Throwable $error) use (&$failures): void {
+        $failures[$name] = $error;
+    },
+);
 
 $grouped = [];
 foreach ($schemas as $schema) {
@@ -71,4 +78,13 @@ foreach ($grouped as $namespace => $cmds) {
     echo "\n";
 }
 
-printf("  total: %d commands across %d namespaces  (kernel: %s, env: %s)\n\n", count($schemas), count($grouped), $kernelClass, $env);
+printf("  total: %d commands across %d namespaces  (kernel: %s, env: %s)\n", count($schemas), count($grouped), $kernelClass, $env);
+
+if ($failures !== []) {
+    fwrite(STDERR, sprintf("\n  \033[33m%d command(s) skipped (lazy service failed to load):\033[0m\n", count($failures)));
+    foreach ($failures as $name => $error) {
+        fwrite(STDERR, sprintf("    %-44s  %s\n", $name, $error->getMessage()));
+    }
+}
+
+echo "\n";

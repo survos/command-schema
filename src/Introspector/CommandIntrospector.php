@@ -14,9 +14,12 @@ use Symfony\Component\Console\Input\InputOption;
 final class CommandIntrospector
 {
     /**
+     * @param  (callable(string $commandName, \Throwable $error): void)|null $onError
+     *         Invoked when a command can't be introspected (typically a LazyCommand whose
+     *         service constructor throws). The command is skipped; the rest continue.
      * @return CommandSchema[] keyed by command name
      */
-    public function describeAll(Application $application): array
+    public function describeAll(Application $application, ?callable $onError = null): array
     {
         $schemas = [];
         foreach ($application->all() as $name => $command) {
@@ -24,7 +27,13 @@ final class CommandIntrospector
             if ($command->getName() !== $name) {
                 continue;
             }
-            $schemas[$name] = $this->describe($command);
+            try {
+                $schemas[$name] = $this->describe($command);
+            } catch (\Throwable $error) {
+                if ($onError !== null) {
+                    $onError($name, $error);
+                }
+            }
         }
 
         return $schemas;
