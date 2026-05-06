@@ -59,6 +59,20 @@ $schemas = (new \Survos\CommandSchema\Introspector\CommandIntrospector())->descr
     },
 );
 
+$noTui = !empty($_SERVER['NO_TUI']) || !empty($_ENV['NO_TUI']);
+$isTty = \function_exists('stream_isatty') && @\stream_isatty(\STDOUT);
+$tuiAvailable = class_exists(\Symfony\Component\Tui\Tui::class);
+
+if (!$noTui && $isTty && $tuiAvailable) {
+    if ($failures !== []) {
+        fwrite(STDERR, sprintf("[command-schema] %d command(s) skipped at boot:\n", count($failures)));
+        foreach ($failures as $name => $error) {
+            fwrite(STDERR, sprintf("  %s: %s\n", $name, $error->getMessage()));
+        }
+    }
+    exit((new \Survos\CommandSchema\Tui\Palette($schemas))->run());
+}
+
 $grouped = [];
 foreach ($schemas as $schema) {
     $grouped[$schema->namespace() ?: '(root)'][] = $schema;
