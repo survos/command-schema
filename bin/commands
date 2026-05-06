@@ -1,0 +1,74 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// vendor/bin/commands — boots the host project's Symfony kernel via the
+// standard KERNEL_CLASS env var, runs the introspector against its
+// FrameworkBundle Application, and prints a namespace-grouped summary.
+//
+// v1 output is plain text. The TUI renderer (symfony/tui) layers on top of
+// this same bootstrap once symfony/tui is installed in the host project.
+
+(function (): void {
+    $autoloadCandidates = [
+        getcwd() . '/vendor/autoload.php',         // host project (typical case)
+        __DIR__ . '/../vendor/autoload.php',       // lib developed standalone
+        __DIR__ . '/../../../autoload.php',        // installed as vendor/survos/command-schema
+    ];
+    foreach ($autoloadCandidates as $candidate) {
+        if (file_exists($candidate)) {
+            require $candidate;
+
+            return;
+        }
+    }
+    fwrite(STDERR, "bin/commands: could not locate composer autoload.php\n");
+    exit(1);
+})();
+
+$projectDir = getcwd();
+$envFile = $projectDir . '/.env';
+if (file_exists($envFile) && class_exists(\Symfony\Component\Dotenv\Dotenv::class)) {
+    (new \Symfony\Component\Dotenv\Dotenv())->bootEnv($envFile);
+}
+
+$kernelClass = $_SERVER['KERNEL_CLASS'] ?? $_ENV['KERNEL_CLASS'] ?? 'App\\Kernel';
+$env = $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'dev';
+$debug = (bool) ($_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? true);
+
+if (!class_exists($kernelClass)) {
+    fwrite(STDERR, "bin/commands: kernel class '{$kernelClass}' not found. Set KERNEL_CLASS in .env or env.\n");
+    exit(1);
+}
+
+if (!class_exists(\Symfony\Bundle\FrameworkBundle\Console\Application::class)) {
+    fwrite(STDERR, "bin/commands: symfony/framework-bundle is required in the host project to discover commands.\n");
+    exit(1);
+}
+
+$kernel = new $kernelClass($env, $debug);
+$kernel->boot();
+
+$application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
+$schemas = (new \Survos\CommandSchema\Introspector\CommandIntrospector())->describeAll($application);
+
+$grouped = [];
+foreach ($schemas as $schema) {
+    $grouped[$schema->namespace() ?: '(root)'][] = $schema;
+}
+ksort($grouped);
+
+echo "\n";
+foreach ($grouped as $namespace => $cmds) {
+    printf("  \033[1m%s\033[0m\n", $namespace);
+    foreach ($cmds as $cmd) {
+        $desc = (string) $cmd->description;
+        if (mb_strlen($desc) > 60) {
+            $desc = mb_substr($desc, 0, 57) . '...';
+        }
+        printf("    %-44s  %-60s  \033[2margs:%d opts:%d\033[0m\n", $cmd->name, $desc, count($cmd->arguments), count($cmd->options));
+    }
+    echo "\n";
+}
+
+printf("  total: %d commands across %d namespaces  (kernel: %s, env: %s)\n\n", count($schemas), count($grouped), $kernelClass, $env);
