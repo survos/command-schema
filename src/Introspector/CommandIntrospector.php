@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Survos\CommandSchema\Introspector;
@@ -14,9 +15,10 @@ use Symfony\Component\Console\Input\InputOption;
 final class CommandIntrospector
 {
     /**
-     * @param  (callable(string $commandName, \Throwable $error): void)|null $onError
-     *         Invoked when a command can't be introspected (typically a LazyCommand whose
-     *         service constructor throws). The command is skipped; the rest continue.
+     * @param (callable(string $commandName, \Throwable $error): void)|null $onError
+     *                                                                               Invoked when a command can't be introspected (typically a LazyCommand whose
+     *                                                                               service constructor throws). The command is skipped; the rest continue.
+     *
      * @return CommandSchema[] keyed by command name
      */
     public function describeAll(Application $application, ?callable $onError = null): array
@@ -30,7 +32,7 @@ final class CommandIntrospector
             try {
                 $schemas[$name] = $this->describe($command);
             } catch (\Throwable $error) {
-                if ($onError !== null) {
+                if (null !== $onError) {
                     $onError($name, $error);
                 }
             }

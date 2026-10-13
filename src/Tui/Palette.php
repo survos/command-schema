@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Survos\CommandSchema\Tui;
@@ -73,8 +74,8 @@ final class Palette
         $this->tui->addListener(function (InputEvent $event): void {
             $key = $event->getData();
             $consumed = match (true) {
-                $key === 'q', $key === Key::ctrl('c') => $this->doQuit(),
-                $key === "\t" => $this->cycleFocus(),
+                'q' === $key, $key === Key::ctrl('c') => $this->doQuit(),
+                "\t" === $key => $this->cycleFocus(),
                 default => false,
             };
             if ($consumed) {
@@ -83,7 +84,7 @@ final class Palette
         });
 
         $first = array_key_first($this->schemasByName);
-        if ($first !== null) {
+        if (null !== $first) {
             $this->renderDetails($first);
         }
 
@@ -108,7 +109,7 @@ final class Palette
     private function renderDetails(string $name): void
     {
         $schema = $this->schemasByName[$name] ?? null;
-        $this->details->setText($schema === null ? '' : $this->formatHelp($schema));
+        $this->details->setText(null === $schema ? '' : $this->formatHelp($schema));
     }
 
     private function formatHelp(CommandSchema $schema): string
@@ -116,14 +117,14 @@ final class Palette
         $lines = [];
 
         $title = "\e[1m{$schema->name}\e[0m";
-        if ($schema->description !== null) {
-            $title .= "  \e[2m—\e[0m  " . $schema->description;
+        if (null !== $schema->description) {
+            $title .= "  \e[2m—\e[0m  ".$schema->description;
         }
         $lines[] = $title;
         $lines[] = '';
 
         $usage = $schema->name;
-        if ($schema->options !== []) {
+        if ([] !== $schema->options) {
             $usage .= ' [options]';
         }
         foreach ($schema->arguments as $arg) {
@@ -131,13 +132,13 @@ final class Palette
             if ($arg->array) {
                 $token .= '...';
             }
-            $usage .= ' ' . $token;
+            $usage .= ' '.$token;
         }
         $lines[] = "\e[2mUSAGE\e[0m";
-        $lines[] = '  ' . $usage;
+        $lines[] = '  '.$usage;
         $lines[] = '';
 
-        if ($schema->arguments !== []) {
+        if ([] !== $schema->arguments) {
             $lines[] = "\e[2mARGUMENTS\e[0m";
             foreach ($schema->arguments as $arg) {
                 $marker = $arg->required ? '*' : ' ';
@@ -146,12 +147,12 @@ final class Palette
             $lines[] = '';
         }
 
-        if ($schema->options !== []) {
+        if ([] !== $schema->options) {
             $lines[] = "\e[2mOPTIONS\e[0m";
             foreach ($schema->options as $opt) {
-                $flag = '--' . $opt->name;
-                if ($opt->shortcut !== null && $opt->shortcut !== '') {
-                    $flag = '-' . $opt->shortcut . ', ' . $flag;
+                $flag = '--'.$opt->name;
+                if (null !== $opt->shortcut && '' !== $opt->shortcut) {
+                    $flag = '-'.$opt->shortcut.', '.$flag;
                 }
                 if ($opt->valueRequired) {
                     $flag .= '=VALUE';
@@ -163,15 +164,15 @@ final class Palette
             $lines[] = '';
         }
 
-        if ($schema->aliases !== []) {
-            $lines[] = "\e[2mALIASES\e[0m  " . implode(', ', $schema->aliases);
+        if ([] !== $schema->aliases) {
+            $lines[] = "\e[2mALIASES\e[0m  ".implode(', ', $schema->aliases);
             $lines[] = '';
         }
 
-        if ($schema->help !== null && trim($schema->help) !== '') {
+        if (null !== $schema->help && '' !== trim($schema->help)) {
             $lines[] = "\e[2mHELP\e[0m";
             foreach (explode("\n", trim($schema->help)) as $line) {
-                $lines[] = '  ' . $line;
+                $lines[] = '  '.$line;
             }
         }
 
@@ -210,7 +211,7 @@ final class Palette
                 maxColumns: 50,
                 border: Border::from([1], BorderPattern::ROUNDED, 'gray'),
             ),
-            SelectListWidget::class . ':focus' => new Style(
+            SelectListWidget::class.':focus' => new Style(
                 border: Border::from([1], BorderPattern::ROUNDED, 'cyan'),
             ),
         ]);

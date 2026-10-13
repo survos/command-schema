@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Survos\CommandSchema\Schema;
@@ -15,5 +16,6 @@ final class OptionSchema
         public readonly bool $negatable,
         public readonly mixed $default = null,
         public readonly ?PromptSchema $prompt = null,
-    ) {}
+    ) {
+    }
 }

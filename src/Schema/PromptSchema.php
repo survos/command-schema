@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Survos\CommandSchema\Schema;
@@ -20,5 +21,6 @@ final class PromptSchema
         public readonly ?string $help = null,
         public readonly ?array $choices = null,
         public readonly bool $multiSelect = false,
-    ) {}
+    ) {
+    }
 }

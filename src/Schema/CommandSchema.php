@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Survos\CommandSchema\Schema;
@@ -18,12 +19,13 @@ final class CommandSchema
         public readonly array $options,
         public readonly array $aliases,
         public readonly bool $hidden,
-    ) {}
+    ) {
+    }
 
     public function namespace(): string
     {
         $colon = strpos($this->name, ':');
 
-        return $colon === false ? '' : substr($this->name, 0, $colon);
+        return false === $colon ? '' : substr($this->name, 0, $colon);
     }
 }
